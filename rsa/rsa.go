@@ -1,6 +1,9 @@
 package rsa
 
-import "math/big"
+import (
+	"fmt"
+	"math/big"
+)
 
 type PublicKey struct {
 	N *big.Int
@@ -35,4 +38,24 @@ func Setup(p big.Int, q big.Int) (*PublicKey, *PrivateKey) {
 	return publicKey, privateKey
 }
 
-//func Encrypt(publicKey *PublicKey) ([]byte, error) {}
+func Encrypt(publicKey *PublicKey, message []byte) ([]byte, error) {
+	m := new(big.Int).SetBytes(message)
+
+	if m.Cmp(publicKey.N) >= 0 {
+		return nil, fmt.Errorf("message too large for key size")
+	}
+
+	c := new(big.Int).Exp(m, publicKey.E, publicKey.N)
+	return c.Bytes(), nil
+}
+
+func Decrypt(privateKey *PrivateKey, ciphertext []byte) ([]byte, error) {
+	c := new(big.Int).SetBytes(ciphertext)
+
+	if c.Cmp(privateKey.N) >= 0 {
+		return nil, fmt.Errorf("ciphertext too large for key size")
+	}
+
+	m := new(big.Int).Exp(c, privateKey.D, privateKey.N)
+	return m.Bytes(), nil
+}
